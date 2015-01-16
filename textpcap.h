@@ -9,7 +9,8 @@ public:
   void packet_handler(const struct pcap_pkthdr *, std::vector<uint8_t>);
   void loop();
 private:
-  size_t total_packages_size;
+  size_t total_packets_size;
+  size_t packet_count;
 };
 
 #endif // TEXTPCAP_H

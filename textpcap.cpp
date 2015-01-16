@@ -4,13 +4,15 @@
 TextPcap::TextPcap(const char *filename) : Pcap::Pcap(filename) {}
 void TextPcap::loop() {
   Pcap::loop();
-  std::cout << "Total size of captured packets: " << total_packages_size
+  std::cout << "Total size of captured packets: " << total_packets_size
             << std::endl;
+  std::cout << "Amount of packets handled: " << packet_count << std::endl;
 }
 
 void TextPcap::packet_handler(const struct pcap_pkthdr *header,
                               std::vector<uint8_t> data) {
-  total_packages_size += header->caplen;
+  total_packets_size += header->caplen;
+  ++packet_count;
   if (might_be_tox_dht(data) && is_ipv4(data)) {
     std::cout << header->ts.tv_sec << "." << header->ts.tv_usec << "\t"
               << src_ip(data) << " > " << dst_ip(data) << "\t("
