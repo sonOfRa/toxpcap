@@ -7,7 +7,7 @@ class SqlitePcap : public Pcap {
 public:
   SqlitePcap(const char *, const char *);
   void loop();
-  void packet_handler(const struct pcap_pkthdr *, std::vector<uint8_t>);
+  void packet_handler(const struct pcap_pkthdr *, const std::vector<uint8_t>&);
 
 private:
   const char *database_filename;

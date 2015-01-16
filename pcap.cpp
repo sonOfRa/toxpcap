@@ -32,9 +32,11 @@ void Pcap::loop() {
 
 void Pcap::internal_loop(u_char *user_data, const struct pcap_pkthdr *header,
                          const u_char *pkt_data) {
-  std::vector<uint8_t> data =
-      std::vector<uint8_t>(pkt_data, pkt_data + header->caplen);
-  ((Pcap *)user_data)->packet_handler(header, data);
+  ((Pcap *)user_data)->current_packet.resize(header->caplen);
+  ((Pcap *)user_data)
+      ->current_packet.assign(pkt_data, pkt_data + header->caplen);
+  ((Pcap *)user_data)
+      ->packet_handler(header, ((Pcap *)user_data)->current_packet);
 }
 
 /**
@@ -42,7 +44,7 @@ void Pcap::internal_loop(u_char *user_data, const struct pcap_pkthdr *header,
  * @param pkt_data the packet to check
  * @return true if the packet is UDP
  */
-bool Pcap::is_udp(std::vector<uint8_t> pkt_data) {
+bool Pcap::is_udp(const std::vector<uint8_t> &pkt_data) {
   return pkt_data.at(ip_protocol_offset) == ip_protocol_udp;
 }
 
@@ -51,7 +53,7 @@ bool Pcap::is_udp(std::vector<uint8_t> pkt_data) {
  * @param pkt_data the packet to check
  * @return true if the packet is TCP
  */
-bool Pcap::is_tcp(std::vector<uint8_t> pkt_data) {
+bool Pcap::is_tcp(const std::vector<uint8_t> &pkt_data) {
   return pkt_data.at(ip_protocol_offset) == ip_protocol_tcp;
 }
 
@@ -60,7 +62,7 @@ bool Pcap::is_tcp(std::vector<uint8_t> pkt_data) {
  * @param pkt_data the packet to check
  * @return true if packet is IPv4
  */
-bool Pcap::is_ipv4(std::vector<uint8_t> pkt_data) {
+bool Pcap::is_ipv4(const std::vector<uint8_t> &pkt_data) {
   return hi_nibble(pkt_data.at(ethernet_frame_size)) == ip_version_v4;
 }
 
@@ -75,7 +77,7 @@ bool Pcap::is_ipv4(std::vector<uint8_t> pkt_data) {
  * @param pkt_data the packet to check
  * @return true if the packet might be a tox DHT packet
  */
-bool Pcap::might_be_tox_dht(std::vector<uint8_t> pkt_data) {
+bool Pcap::might_be_tox_dht(const std::vector<uint8_t> &pkt_data) {
   if (!is_udp(pkt_data)) {
     return false;
   }
@@ -96,7 +98,8 @@ bool Pcap::might_be_tox_dht(std::vector<uint8_t> pkt_data) {
  * @brief Pcap::get_dht_packet_type type of the DHT packet
  * @return the type of the DHT packet
  */
-Pcap::DhtPacketType Pcap::get_dht_packet_type(std::vector<uint8_t> pkt_data) {
+Pcap::DhtPacketType
+Pcap::get_dht_packet_type(const std::vector<uint8_t> &pkt_data) {
   uint8_t type = pkt_data.at(get_udp_payload_offset(pkt_data));
   if (type != 0x00 && type != 0x01 && type != 0x02 && type != 0x04) {
     return DhtPacketType::unknown;
@@ -109,16 +112,16 @@ Pcap::DhtPacketType Pcap::get_dht_packet_type(std::vector<uint8_t> pkt_data) {
  * @brief Pcap::get_dht_public_key the public key of the DHT packet
  * @return
  */
-std::vector<uint8_t> Pcap::get_dht_public_key(std::vector<uint8_t>) {}
+std::vector<uint8_t> Pcap::get_dht_public_key(const std::vector<uint8_t> &) {}
 
-std::vector<uint8_t> Pcap::get_dht_nonce(std::vector<uint8_t>) {}
+std::vector<uint8_t> Pcap::get_dht_nonce(const std::vector<uint8_t> &) {}
 
 /**
  * @brief Pcap::src_ip get the source IP of a packet
  * @param pkt_data the packet
  * @return the source IP of the packet
  */
-std::string Pcap::src_ip(std::vector<uint8_t> pkt_data) {
+std::string Pcap::src_ip(const std::vector<uint8_t> &pkt_data) {
   std::ostringstream s;
   for (int i = ip_src_offset; i < ip_src_offset + 4; i++) {
     s << (int)pkt_data.at(i);
@@ -134,7 +137,7 @@ std::string Pcap::src_ip(std::vector<uint8_t> pkt_data) {
  * @param pkt_data the packet
  * @return the destination IP of the packet
  */
-std::string Pcap::dst_ip(std::vector<uint8_t> pkt_data) {
+std::string Pcap::dst_ip(const std::vector<uint8_t> &pkt_data) {
   std::ostringstream s;
   for (int i = ip_dst_offset; i < ip_dst_offset + 4; i++) {
     s << (int)pkt_data.at(i);
@@ -153,7 +156,7 @@ std::string Pcap::dst_ip(std::vector<uint8_t> pkt_data) {
  * @return The offset of the UDP payload in this packet (in bytes). 0 if the
  * packet is not a UDP packet.
  */
-uint8_t Pcap::get_udp_payload_offset(std::vector<uint8_t> pkt_data) {
+uint8_t Pcap::get_udp_payload_offset(const std::vector<uint8_t> &pkt_data) {
   if (!is_udp(pkt_data)) {
     return 0;
   }
