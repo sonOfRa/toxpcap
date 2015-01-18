@@ -14,12 +14,15 @@
 
 #include "pcap.h"
 
+#include "textpcap.h"
+#include "sqlitepcap.h"
+
 /**
  * @brief Pcap::Pcap Construct a new instance for a pcap file
  * @param filename filename of the pcap file to use
  * @throws runtime_error if the file can't be found or is not a pcap file
  */
-Pcap::Pcap(const char *filename) {
+template <typename PcapType> Pcap<PcapType>::Pcap(const char *filename) {
   fd = open(filename, O_RDONLY);
   if (fd == -1) {
     char str[256];
@@ -63,7 +66,7 @@ Pcap::Pcap(const char *filename) {
   }
 }
 
-Pcap::~Pcap() {
+template <typename PcapType> Pcap<PcapType>::~Pcap() {
   if (munmap(mmap_address, file_size) == -1) {
     std::cerr << "Failed to unmap the file. This shouldn't happen. Something "
                  "went really really wrong :(" << std::endl;
@@ -75,9 +78,9 @@ Pcap::~Pcap() {
  * implementation as well.
  * @brief Pcap::loop Invokes packet_handler for each packet in the pcap file
  */
-void Pcap::loop() {
+template <typename PcapType> void Pcap<PcapType>::loop() {
+  static_cast<PcapType *>(this)->before_loop();
   uint64_t offset = pcap_header_size;
-  std::vector<uint8_t> packet;
   while (offset < (uint64_t)file_size) {
     uint8_t *current = mmap_address + offset;
     uint32_t packet_sec = ((uint32_t *)current)[0];
@@ -86,10 +89,12 @@ void Pcap::loop() {
 
     uint8_t *current_packet = current + pcap_rec_header_size;
 
-    packet_handler(packet_sec, packet_usec, packet_len, current_packet);
+    static_cast<PcapType *>(this)
+        ->packet_handler(packet_sec, packet_usec, packet_len, current_packet);
 
     offset += pcap_rec_header_size + packet_len;
   }
+  static_cast<PcapType *>(this)->after_loop();
 }
 
 /**
@@ -97,7 +102,7 @@ void Pcap::loop() {
  * @param pkt_data the packet to check
  * @return true if the packet is UDP
  */
-bool Pcap::is_udp(const uint8_t *pkt_data) {
+template <typename PcapType> bool Pcap<PcapType>::is_udp(const uint8_t *pkt_data) {
   return pkt_data[ip_protocol_offset] == ip_protocol_udp;
 }
 
@@ -106,7 +111,7 @@ bool Pcap::is_udp(const uint8_t *pkt_data) {
  * @param pkt_data the packet to check
  * @return true if the packet is TCP
  */
-bool Pcap::is_tcp(const uint8_t *pkt_data) {
+template <typename PcapType> bool Pcap<PcapType>::is_tcp(const uint8_t *pkt_data) {
   return pkt_data[ip_protocol_offset] == ip_protocol_tcp;
 }
 
@@ -115,7 +120,8 @@ bool Pcap::is_tcp(const uint8_t *pkt_data) {
  * @param pkt_data the packet to check
  * @return true if packet is IPv4
  */
-bool Pcap::is_ipv4(const uint8_t *pkt_data) {
+template <typename PcapType>
+bool Pcap<PcapType>::is_ipv4(const uint8_t *pkt_data) {
   return hi_nibble(pkt_data[ethernet_frame_size]) == ip_version_v4;
 }
 
@@ -130,7 +136,8 @@ bool Pcap::is_ipv4(const uint8_t *pkt_data) {
  * @param pkt_data the packet to check
  * @return true if the packet might be a tox DHT packet
  */
-bool Pcap::might_be_tox_dht(const uint8_t *pkt_data, uint32_t size) {
+template <typename PcapType>
+bool Pcap<PcapType>::might_be_tox_dht(const uint8_t *pkt_data, uint32_t size) {
   if (!is_udp(pkt_data)) {
     return false;
   }
@@ -151,7 +158,9 @@ bool Pcap::might_be_tox_dht(const uint8_t *pkt_data, uint32_t size) {
  * @brief Pcap::get_dht_packet_type type of the DHT packet
  * @return the type of the DHT packet
  */
-Pcap::DhtPacketType Pcap::get_dht_packet_type(const uint8_t *pkt_data) {
+template <typename PcapType>
+typename Pcap<PcapType>::DhtPacketType
+Pcap<PcapType>::get_dht_packet_type(const uint8_t *pkt_data) {
   uint8_t type = pkt_data[get_udp_payload_offset(pkt_data)];
   if (type != 0x00 && type != 0x01 && type != 0x02 && type != 0x04) {
     return DhtPacketType::unknown;
@@ -164,16 +173,24 @@ Pcap::DhtPacketType Pcap::get_dht_packet_type(const uint8_t *pkt_data) {
  * @brief Pcap::get_dht_public_key the public key of the DHT packet
  * @return
  */
-const uint8_t *Pcap::get_dht_public_key(const uint8_t *) { return nullptr; }
+template <typename PcapType>
+const uint8_t *Pcap<PcapType>::get_dht_public_key(const uint8_t *) {
+  return nullptr;
+}
 
-const uint8_t *Pcap::get_dht_nonce(const uint8_t *) { return nullptr; }
+template <typename PcapType>
+const uint8_t *Pcap<PcapType>::get_dht_nonce(const uint8_t *) {
+  return nullptr;
+}
 
 /**
  * @brief Pcap::src_ip get the source IP of a packet
  * @param pkt_data the packet
  * @return the source IP of the packet
  */
-std::string Pcap::src_ip(const uint8_t *pkt_data) {
+template <typename PcapType>
+
+std::string Pcap<PcapType>::src_ip(const uint8_t *pkt_data) {
   std::ostringstream s;
   for (int i = ip_src_offset; i < ip_src_offset + 4; i++) {
     s << (int)pkt_data[i];
@@ -189,7 +206,7 @@ std::string Pcap::src_ip(const uint8_t *pkt_data) {
  * @param pkt_data the packet
  * @return the destination IP of the packet
  */
-std::string Pcap::dst_ip(const uint8_t *pkt_data) {
+template <typename PcapType> std::string Pcap<PcapType>::dst_ip(const uint8_t *pkt_data) {
   std::ostringstream s;
   for (int i = ip_dst_offset; i < ip_dst_offset + 4; i++) {
     s << (int)pkt_data[i];
@@ -208,7 +225,8 @@ std::string Pcap::dst_ip(const uint8_t *pkt_data) {
  * @return The offset of the UDP payload in this packet (in bytes). 0 if the
  * packet is not a UDP packet.
  */
-uint8_t Pcap::get_udp_payload_offset(const uint8_t *pkt_data) {
+template <typename PcapType>
+uint8_t Pcap<PcapType>::get_udp_payload_offset(const uint8_t *pkt_data) {
   if (!is_udp(pkt_data)) {
     return 0;
   }
@@ -218,3 +236,7 @@ uint8_t Pcap::get_udp_payload_offset(const uint8_t *pkt_data) {
 
   return ethernet_frame_size + ip_header_bytes + udp_data_offset;
 }
+
+
+template class Pcap<TextPcap>;
+template class Pcap<SqlitePcap>;

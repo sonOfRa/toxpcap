@@ -9,10 +9,11 @@
  * @brief Base Class for Pcap functions. Currently limited to IPv4 only
  * functionality.
  */
+template<class PcapType>
 class Pcap {
 public:
   Pcap(const char *);
-  virtual ~Pcap();
+  ~Pcap();
 
   enum class DhtPacketType : uint8_t {
     echo_request = 0x00,
@@ -22,9 +23,8 @@ public:
     unknown
   };
 
-  virtual void packet_handler(uint32_t, uint32_t, uint32_t,
-                              const uint8_t *) = 0;
-  virtual void loop();
+  void packet_handler(uint32_t, uint32_t, uint32_t, const uint8_t *);
+  void loop();
 
   bool is_udp(const uint8_t *);
   bool is_tcp(const uint8_t *);

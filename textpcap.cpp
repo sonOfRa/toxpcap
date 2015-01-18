@@ -2,10 +2,13 @@
 #include <iostream>
 
 TextPcap::TextPcap(const char *filename) : Pcap::Pcap(filename) {}
-void TextPcap::loop() {
+
+void TextPcap::before_loop() {
   total_packets_size = 0;
   packet_count = 0;
-  Pcap::loop();
+}
+
+void TextPcap::after_loop() {
   std::cout << "Total size of captured packets: " << total_packets_size
             << std::endl;
   std::cout << "Amount of packets handled: " << packet_count << std::endl;

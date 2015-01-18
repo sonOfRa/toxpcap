@@ -21,19 +21,15 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  Pcap *pc;
   try {
     if (argc == 2) {
       // No Sqlite database path supplied, run in text mode
-      pc = new TextPcap(argv[1]);
+        TextPcap(argv[1]).loop();
     } else {
-      // Run in Sqlite mode
-      pc = new SqlitePcap(argv[1], argv[2]);
+        SqlitePcap(argv[1], argv[2]).loop();
     }
   } catch (std::runtime_error &e) {
     std::cerr << "Could not start pcap parsing: " << e.what() << std::endl;
     exit(EXIT_FAILURE);
   }
-  pc->loop();
-  delete pc;
 }
