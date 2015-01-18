@@ -6,8 +6,7 @@
 class TextPcap : public Pcap {
 public:
   TextPcap(const char *);
-  void packet_handler(uint32_t packet_sec, uint32_t packet_usec,
-                      const std::vector<uint8_t> &);
+  void packet_handler(uint32_t, uint32_t, uint32_t, const uint8_t *);
   void loop();
 
 private:

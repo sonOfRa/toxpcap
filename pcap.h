@@ -22,24 +22,23 @@ public:
     unknown
   };
 
-  virtual void packet_handler(uint32_t, uint32_t,
-                              const std::vector<uint8_t> &) = 0;
+  virtual void packet_handler(uint32_t, uint32_t, uint32_t,
+                              const uint8_t *) = 0;
   virtual void loop();
 
-  bool is_udp(const std::vector<uint8_t> &);
-  bool is_tcp(const std::vector<uint8_t> &);
-  bool is_ipv4(const std::vector<uint8_t> &);
+  bool is_udp(const uint8_t *);
+  bool is_tcp(const uint8_t *);
+  bool is_ipv4(const uint8_t *);
 
-  bool might_be_tox_dht(const std::vector<uint8_t> &);
-  DhtPacketType get_dht_packet_type(const std::vector<uint8_t> &);
-  std::vector<uint8_t> get_dht_public_key(const std::vector<uint8_t> &);
-  std::vector<uint8_t> get_dht_nonce(const std::vector<uint8_t> &);
-  std::vector<uint8_t> get_dht_payload(const std::vector<uint8_t> &);
+  bool might_be_tox_dht(const uint8_t *, uint32_t);
+  DhtPacketType get_dht_packet_type(const uint8_t *);
+  const uint8_t *get_dht_public_key(const uint8_t *);
+  const uint8_t *get_dht_nonce(const uint8_t *);
 
-  std::string src_ip(const std::vector<uint8_t> &);
-  std::string dst_ip(const std::vector<uint8_t> &);
+  std::string src_ip(const uint8_t *);
+  std::string dst_ip(const uint8_t *);
 
-  uint8_t get_udp_payload_offset(const std::vector<uint8_t> &);
+  uint8_t get_udp_payload_offset(const uint8_t *);
 
   static inline uint8_t lo_nibble(uint8_t byte) { return byte & 0x0F; }
 
