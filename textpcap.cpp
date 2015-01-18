@@ -11,9 +11,9 @@ void TextPcap::loop() {
   std::cout << "Amount of packets handled: " << packet_count << std::endl;
 }
 
-void TextPcap::packet_handler(const struct pcap_pkthdr *header,
+void TextPcap::packet_handler(uint32_t packet_sec, uint32_t packet_usec,
                               const std::vector<uint8_t> &data) {
-  total_packets_size += header->caplen;
+  total_packets_size += data.size();
   ++packet_count;
   //  if (might_be_tox_dht(data) && is_ipv4(data)) {
   //    std::cout << header->ts.tv_sec << "." << header->ts.tv_usec << "\t"

@@ -12,5 +12,5 @@ void SqlitePcap::loop() {
   return;
 }
 
-void SqlitePcap::packet_handler(const pcap_pkthdr *header,
-                                const std::vector<uint8_t>& pkt_data) {}
+void SqlitePcap::packet_handler(uint32_t packet_sec, uint32_t packet_usec,
+                                const std::vector<uint8_t> &data) {}

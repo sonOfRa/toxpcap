@@ -1,9 +1,16 @@
 #include <vector>
 #include <cstdint>
-#include <pcap/pcap.h>
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+#include <fcntl.h>
+#include <cerrno>
+#include <cstring>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <string>
+#include <byteswap.h>
 
 #include "pcap.h"
 
@@ -13,10 +20,48 @@
  * @throws runtime_error if the file can't be found or is not a pcap file
  */
 Pcap::Pcap(const char *filename) {
-  char errbuf[PCAP_ERRBUF_SIZE];
-  pcap_instance = pcap_open_offline(filename, errbuf);
-  if (!pcap_instance)
-    throw std::runtime_error(errbuf);
+  fd = open(filename, O_RDONLY);
+  if (fd == -1) {
+    char str[256];
+    strcpy(str, "Could not open file for reading: ");
+    strcat(str, strerror(errno));
+    throw std::runtime_error(str);
+  }
+
+  struct stat statbuf;
+  if (fstat(fd, &statbuf) < 0) {
+    char str[256];
+    strcpy(str, "Could not get file size: ");
+    strcat(str, strerror(errno));
+    throw std::runtime_error(str);
+  }
+
+  file_size = statbuf.st_size;
+  mmap_address =
+      (uint8_t *)mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  if (mmap_address == (void *)-1) {
+    char str[256];
+    strcpy(str, "Could not map file into memory: ");
+    strcat(str, strerror(errno));
+    throw std::runtime_error(str);
+  }
+
+  if (close(fd) == -1) {
+    char str[256];
+    strcpy(str, "Failed to close file: ");
+    strcat(str, strerror(errno));
+    throw std::runtime_error(str);
+  }
+
+  uint32_t magic_number = ((uint32_t *)mmap_address)[0];
+  if (magic_number == 0xa1b2c3d4 || magic_number == 0xa1b23c4d) {
+    flip_bytes = false;
+  } else if (magic_number == 0xd4c3b2a1 || magic_number == 0x4d3cb2a1) {
+    flip_bytes = true;
+  } else {
+    throw std::runtime_error("File is not a pcap file");
+  }
 }
 
 Pcap::~Pcap() {}
@@ -27,16 +72,22 @@ Pcap::~Pcap() {}
  * @brief Pcap::loop Invokes packet_handler for each packet in the pcap file
  */
 void Pcap::loop() {
-  pcap_loop(pcap_instance, 0, internal_loop, (u_char *)((void *)this));
-}
+  uint64_t offset = pcap_header_size;
+  std::vector<uint8_t> packet;
+  while (offset < (uint64_t)file_size) {
+    uint8_t *current = mmap_address + offset;
+    uint32_t packet_sec = ((uint32_t *)current)[0];
+    uint32_t packet_usec = ((uint32_t *)current)[1];
+    uint32_t packet_len = ((uint32_t *)current)[2];
 
-void Pcap::internal_loop(u_char *user_data, const struct pcap_pkthdr *header,
-                         const u_char *pkt_data) {
-  ((Pcap *)user_data)->current_packet.resize(header->caplen);
-  ((Pcap *)user_data)
-      ->current_packet.assign(pkt_data, pkt_data + header->caplen);
-  ((Pcap *)user_data)
-      ->packet_handler(header, ((Pcap *)user_data)->current_packet);
+    uint8_t *current_packet = current + pcap_rec_header_size;
+    packet.resize(packet_len);
+    packet.assign(current_packet, current_packet + packet_len);
+
+    packet_handler(packet_sec, packet_usec, packet);
+
+    offset += pcap_rec_header_size + packet_len;
+  }
 }
 
 /**

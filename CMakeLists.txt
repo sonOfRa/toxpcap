@@ -9,5 +9,5 @@ set(SRC_LIST main.cpp
     sqlitepcap.cpp
 )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -lpcap -O3 -flto")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -O3 -flto -Wall -Wextra -pedantic")
 add_executable(${PROJECT_NAME} ${SRC_LIST})
