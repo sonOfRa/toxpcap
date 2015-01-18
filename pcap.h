@@ -62,7 +62,6 @@ public:
 
 private:
   int fd;
-  bool flip_bytes;
   uint8_t *mmap_address;
   off_t file_size;
 };

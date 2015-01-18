@@ -56,9 +56,8 @@ Pcap::Pcap(const char *filename) {
 
   uint32_t magic_number = ((uint32_t *)mmap_address)[0];
   if (magic_number == 0xa1b2c3d4 || magic_number == 0xa1b23c4d) {
-    flip_bytes = false;
   } else if (magic_number == 0xd4c3b2a1 || magic_number == 0x4d3cb2a1) {
-    flip_bytes = true;
+    abort();
   } else {
     throw std::runtime_error("File is not a pcap file");
   }
@@ -86,8 +85,8 @@ void Pcap::loop() {
     uint32_t packet_len = ((uint32_t *)current)[2];
 
     uint8_t *current_packet = current + pcap_rec_header_size;
-    packet.resize(packet_len);
-    packet.assign(current_packet, current_packet + packet_len);
+    packet.resize(0);
+    packet.insert(packet.begin(), current_packet, current_packet + packet_len);
 
     packet_handler(packet_sec, packet_usec, packet);
 
