@@ -168,9 +168,13 @@ Pcap::get_dht_packet_type(const std::vector<uint8_t> &pkt_data) {
  * @brief Pcap::get_dht_public_key the public key of the DHT packet
  * @return
  */
-std::vector<uint8_t> Pcap::get_dht_public_key(const std::vector<uint8_t> &) {}
+std::vector<uint8_t> Pcap::get_dht_public_key(const std::vector<uint8_t> &) {
+  return std::vector<uint8_t>();
+}
 
-std::vector<uint8_t> Pcap::get_dht_nonce(const std::vector<uint8_t> &) {}
+std::vector<uint8_t> Pcap::get_dht_nonce(const std::vector<uint8_t> &) {
+  return std::vector<uint8_t>();
+}
 
 /**
  * @brief Pcap::src_ip get the source IP of a packet

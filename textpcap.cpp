@@ -11,7 +11,7 @@ void TextPcap::loop() {
   std::cout << "Amount of packets handled: " << packet_count << std::endl;
 }
 
-void TextPcap::packet_handler(uint32_t packet_sec, uint32_t packet_usec,
+void TextPcap::packet_handler(uint32_t, uint32_t,
                               const std::vector<uint8_t> &data) {
   total_packets_size += data.size();
   ++packet_count;
