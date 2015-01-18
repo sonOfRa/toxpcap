@@ -64,7 +64,12 @@ Pcap::Pcap(const char *filename) {
   }
 }
 
-Pcap::~Pcap() {}
+Pcap::~Pcap() {
+  if (munmap(mmap_address, file_size) == -1) {
+    std::cerr << "Failed to unmap the file. This shouldn't happen. Something "
+                 "went really really wrong :(" << std::endl;
+  }
+}
 
 /**
  * When overriding this method, you should make sure that you invoke the base
