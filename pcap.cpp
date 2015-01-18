@@ -100,7 +100,7 @@ void Pcap::loop() {
  * @return true if the packet is UDP
  */
 bool Pcap::is_udp(const std::vector<uint8_t> &pkt_data) {
-  return pkt_data.at(ip_protocol_offset) == ip_protocol_udp;
+  return pkt_data[ip_protocol_offset] == ip_protocol_udp;
 }
 
 /**
@@ -109,7 +109,7 @@ bool Pcap::is_udp(const std::vector<uint8_t> &pkt_data) {
  * @return true if the packet is TCP
  */
 bool Pcap::is_tcp(const std::vector<uint8_t> &pkt_data) {
-  return pkt_data.at(ip_protocol_offset) == ip_protocol_tcp;
+  return pkt_data[ip_protocol_offset] == ip_protocol_tcp;
 }
 
 /**
@@ -118,7 +118,7 @@ bool Pcap::is_tcp(const std::vector<uint8_t> &pkt_data) {
  * @return true if packet is IPv4
  */
 bool Pcap::is_ipv4(const std::vector<uint8_t> &pkt_data) {
-  return hi_nibble(pkt_data.at(ethernet_frame_size)) == ip_version_v4;
+  return hi_nibble(pkt_data[ethernet_frame_size]) == ip_version_v4;
 }
 
 /**
@@ -155,7 +155,7 @@ bool Pcap::might_be_tox_dht(const std::vector<uint8_t> &pkt_data) {
  */
 Pcap::DhtPacketType
 Pcap::get_dht_packet_type(const std::vector<uint8_t> &pkt_data) {
-  uint8_t type = pkt_data.at(get_udp_payload_offset(pkt_data));
+  uint8_t type = pkt_data[get_udp_payload_offset(pkt_data)];
   if (type != 0x00 && type != 0x01 && type != 0x02 && type != 0x04) {
     return DhtPacketType::unknown;
   }
@@ -183,7 +183,7 @@ std::vector<uint8_t> Pcap::get_dht_nonce(const std::vector<uint8_t> &) {
 std::string Pcap::src_ip(const std::vector<uint8_t> &pkt_data) {
   std::ostringstream s;
   for (int i = ip_src_offset; i < ip_src_offset + 4; i++) {
-    s << (int)pkt_data.at(i);
+    s << (int)pkt_data[i];
     if (i < ((ip_src_offset + 4) - 1)) {
       s << ".";
     }
@@ -199,7 +199,7 @@ std::string Pcap::src_ip(const std::vector<uint8_t> &pkt_data) {
 std::string Pcap::dst_ip(const std::vector<uint8_t> &pkt_data) {
   std::ostringstream s;
   for (int i = ip_dst_offset; i < ip_dst_offset + 4; i++) {
-    s << (int)pkt_data.at(i);
+    s << (int)pkt_data[i];
     if (i < ((ip_dst_offset + 4) - 1)) {
       s << ".";
     }
@@ -219,7 +219,7 @@ uint8_t Pcap::get_udp_payload_offset(const std::vector<uint8_t> &pkt_data) {
   if (!is_udp(pkt_data)) {
     return 0;
   }
-  uint8_t ihl = lo_nibble(pkt_data.at(ethernet_frame_size));
+  uint8_t ihl = lo_nibble(pkt_data[ethernet_frame_size]);
   uint8_t ip_header_bits = ihl * 32;
   uint8_t ip_header_bytes = ip_header_bits / 8;
 
