@@ -8,7 +8,7 @@ public:
   SqlitePcap(const char *, const char *);
   void before_loop();
   void after_loop();
-  void packet_handler(uint32_t, uint32_t, uint32_t, const uint8_t *);
+  void packet_handler(time_t, uint32_t, uint32_t, const uint8_t *);
 
 private:
   const char *database_filename;

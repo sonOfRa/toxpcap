@@ -14,5 +14,5 @@ void SqlitePcap::after_loop() {
 
 }
 
-void SqlitePcap::packet_handler(uint32_t, uint32_t, uint32_t, const uint8_t *) {
+void SqlitePcap::packet_handler(time_t, uint32_t, uint32_t, const uint8_t *) {
 }
