@@ -39,24 +39,6 @@ void TextPcap::packet_handler(time_t sec, uint32_t usec, uint32_t len,
               << std::endl;
     std::cout << "\tNonce: " << nonce(get_dht_nonce(data)) << std::endl;
   }
-
-  //  if (might_be_tox_dht(data) && is_ipv4(data)) {
-  //    std::cout << header->ts.tv_sec << "." << header->ts.tv_usec << "\t"
-  //              << src_ip(data) << " > " << dst_ip(data) << "\t("
-  //              << header->caplen << " bytes)" << std::endl;
-
-  //    int udp_payload_offset = get_udp_payload_offset(data);
-  //    if (data.size() >= udp_payload_offset) {
-  //      for (auto it = data.begin() + udp_payload_offset; it != data.end();
-  //           ++it) {
-  //        std::cout << std::hex << (int)*it << std::dec;
-  //      }
-  //      std::cout << std::endl;
-  //    }
-  //  } else {
-  //    std::cout << "\tPacket does not seem to be a Tox DHT packet" <<
-  //    std::endl;
-  //  }
 }
 
 std::string TextPcap::ip_address_v4(const uint8_t *input) {
